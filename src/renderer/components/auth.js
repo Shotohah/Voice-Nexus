@@ -1,5 +1,5 @@
 // ============================================================================
-// Vybe — экран регистрации / входа.
+// Voice Nexus — экран регистрации / входа.
 // Это UI-мокап: нет настоящего бэкенда и сети, поля и кнопки валидируются
 // только на клиенте, а "успешный" вход просто открывает основной интерфейс.
 // Логин задуман как в Steam: именно username + пароль, а не email.
@@ -22,7 +22,7 @@ function buildMarkup() {
       <div class="auth-card">
         <div class="auth-card__brand">
           <span class="auth-card__brand-dot" aria-hidden="true"></span>
-          <span class="auth-card__brand-name">Vybe</span>
+          <span class="auth-card__brand-name">Voice Nexus</span>
         </div>
         <h1 class="auth-card__title">${isRegister ? 'Создать аккаунт' : 'С возвращением'}</h1>
         <p class="auth-card__subtitle">${

@@ -1,5 +1,5 @@
 // ============================================================================
-// Vybe — авто-обновление "по воздуху" через electron-updater + GitHub Releases.
+// Voice Nexus — авто-обновление "по воздуху" через electron-updater + GitHub Releases.
 //
 // Как это работает: при старте приложение обращается к GitHub API репозитория
 // (publish.owner/repo из package.json), сверяет текущую версию (app.getVersion())
@@ -60,7 +60,7 @@ function initAutoUpdates(mainWindow) {
     const result = await dialog.showMessageBox(mainWindowRef, {
       type: 'info',
       title: 'Доступно обновление',
-      message: `Vybe ${info.version} готов к установке`,
+      message: `Voice Nexus ${info.version} готов к установке`,
       detail: 'Обновление уже скачано. Перезапустить сейчас, чтобы применить его?',
       buttons: ['Перезапустить сейчас', 'Позже'],
       defaultId: 0,

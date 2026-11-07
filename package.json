@@ -1,9 +1,9 @@
 {
-  "name": "vybe",
+  "name": "voice-nexus",
   "version": "1.0.0",
-  "description": "Vybe — UI/UX-прототип мессенджера с голосовыми каналами (собственная визуальная идентичность)",
+  "description": "Voice Nexus — UI/UX-прототип мессенджера с голосовыми каналами (собственная визуальная идентичность)",
   "main": "src/main/main.js",
-  "author": "Vybe Concept",
+  "author": "Voice Nexus",
   "license": "MIT",
   "private": true,
   "scripts": {
@@ -17,8 +17,8 @@
     "electron-builder": "^25.1.8"
   },
   "build": {
-    "appId": "com.vybe.concept",
-    "productName": "Vybe",
+    "appId": "com.voicenexus.app",
+    "productName": "Voice Nexus",
     "directories": {
       "output": "dist"
     },
@@ -43,7 +43,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "artifactName": "Vybe-Setup-${version}.exe"
+      "artifactName": "VoiceNexus-Setup-${version}.exe"
     },
     "publish": {
       "provider": "github",

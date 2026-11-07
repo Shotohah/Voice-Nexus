@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
-contextBridge.exposeInMainWorld('vybe', {
+contextBridge.exposeInMainWorld('voiceNexus', {
   minimize: () => ipcRenderer.invoke('window:minimize'),
   toggleMaximize: () => ipcRenderer.invoke('window:toggleMaximize'),
   close: () => ipcRenderer.invoke('window:close'),

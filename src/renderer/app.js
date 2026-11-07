@@ -75,7 +75,7 @@ subscribe(updateThemeButtons);
 
 function safeGetSavedTheme() {
   try {
-    return localStorage.getItem('vybe-theme');
+    return localStorage.getItem('voice-nexus-theme');
   } catch (e) {
     return null;
   }
@@ -83,13 +83,13 @@ function safeGetSavedTheme() {
 
 // ---- Кастомные кнопки управления окном ----
 document.getElementById('btn-minimize')?.addEventListener('click', () => {
-  window.vybe?.minimize();
+  window.voiceNexus?.minimize();
 });
 document.getElementById('btn-maximize')?.addEventListener('click', () => {
-  window.vybe?.toggleMaximize();
+  window.voiceNexus?.toggleMaximize();
 });
 document.getElementById('btn-close')?.addEventListener('click', () => {
-  window.vybe?.close();
+  window.voiceNexus?.close();
 });
 
 // ---- Старт приложения: сперва экран входа, основной интерфейс — после ----

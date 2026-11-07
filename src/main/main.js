@@ -11,7 +11,7 @@ function createWindow() {
     minWidth: 960,
     minHeight: 600,
     backgroundColor: '#15161C',
-    title: 'Vybe',
+    title: 'Voice Nexus',
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
     titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
     webPreferences: {
