@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:;" />
+  <title>Vybe</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;1,500&family=Manrope:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles/theme.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/rail.css" />
+  <link rel="stylesheet" href="styles/channels.css" />
+  <link rel="stylesheet" href="styles/chat.css" />
+  <link rel="stylesheet" href="styles/members.css" />
+  <link rel="stylesheet" href="styles/voice.css" />
+  <link rel="stylesheet" href="styles/auth.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Кастомный заголовок окна -->
+    <header class="titlebar">
+      <div class="titlebar__brand">
+        <span class="titlebar__brand-dot" aria-hidden="true"></span>
+        <span>Vybe</span>
+      </div>
+      <div class="titlebar__controls" role="group" aria-label="Управление окном">
+        <div class="theme-switcher" id="theme-switcher" role="group" aria-label="Тема оформления">
+          <button class="theme-switcher__btn" data-theme-value="dark" title="Dark">●</button>
+          <button class="theme-switcher__btn" data-theme-value="light" title="Light">○</button>
+          <button class="theme-switcher__btn" data-theme-value="amoled" title="AMOLED">◆</button>
+        </div>
+        <span class="titlebar__divider" aria-hidden="true"></span>
+        <button class="titlebar__btn" id="btn-minimize" title="Свернуть" aria-label="Свернуть">
+          <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1" y="5.5" width="10" height="1" fill="currentColor"/></svg>
+        </button>
+        <button class="titlebar__btn" id="btn-maximize" title="Развернуть" aria-label="Развернуть">
+          <svg width="12" height="12" viewBox="0 0 12 12"><rect x="1.5" y="1.5" width="9" height="9" fill="none" stroke="currentColor"/></svg>
+        </button>
+        <button class="titlebar__btn titlebar__btn--close" id="btn-close" title="Закрыть" aria-label="Закрыть">
+          <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1 1L11 11M11 1L1 11" stroke="currentColor" stroke-width="1.2"/></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="main-layout" id="main-layout" hidden>
+      <!-- Колонка 1: рейл серверов -->
+      <nav class="rail" id="rail" aria-label="Серверы"></nav>
+
+      <!-- Колонка 2: панель каналов выбранного сервера -->
+      <aside class="channels" id="channels" aria-label="Каналы"></aside>
+
+      <!-- Колонка 3: контентная область — чат ИЛИ голосовой экран -->
+      <main class="content" id="content" aria-label="Содержимое канала"></main>
+
+      <!-- Колонка 4 (только для текстовых каналов): участники -->
+      <aside class="members" id="members" aria-label="Участники сервера"></aside>
+    </div>
+
+    <!-- Экран регистрации/входа — показывается до авторизации -->
+    <div id="auth-container"></div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

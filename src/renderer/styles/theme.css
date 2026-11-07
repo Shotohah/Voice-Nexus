@@ -1,0 +1,142 @@
+/* ==========================================================================
+   Vybe — дизайн-токены (CSS custom properties)
+   Три темы: dark (по умолчанию), light, amoled.
+   Значения взяты из UI/UX-концепта: коралл/янтарь вместо холодного блюрпла,
+   скругления 16–24px, мягкие градиентные подложки.
+   ========================================================================== */
+
+:root {
+  /* ---- Акцент и статусы — одинаковы во всех темах ---- */
+  --color-accent: #FF6B5E;
+  --color-accent-hover: #FFB648;
+  --color-accent-rgb: 255, 107, 94;
+
+  --status-online: #4ADE80;
+  --status-idle: #FBBF24;
+  --status-dnd: #F87171;
+  --status-offline: #6B7280;
+
+  /* ---- Геометрия ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  /* ---- Ширины колонок (повторяют схему навигации) ---- */
+  --rail-width: 76px;
+  --channels-width: 248px;
+  --members-width: 240px;
+
+  /* ---- Типографика ----
+     Display/заголовки: Fraunces — тёплая, слегка гротескная антиква
+     с мягкими засечками, даёт «органический» характер без дефолтного
+     cream+terracotta клише (здесь на тёмном фоне + коралловый акцент).
+     Текст/UI: Manrope — геометричный гротеск с закруглёнными концами
+     штрихов, который визуально рифмуется со скруглениями интерфейса. */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui: 'Manrope', -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: 'IBM Plex Mono', 'SFMono-Regular', Consolas, monospace;
+
+  /* ---- Движение ----
+     Спринговый easing с лёгким overshoot — моторная подпись бренда. */
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --dur-fast: 120ms;
+  --dur-base: 180ms;
+  --dur-slow: 250ms;
+}
+
+/* ==========================================================================
+   DARK (основная тема)
+   ========================================================================== */
+:root,
+:root[data-theme="dark"] {
+  --bg-app: #15161C;
+  --bg-rail: #101117;
+  --bg-channels: #1B1C24;
+  --bg-chat: #1F212B;
+  --bg-surface: #262838;
+  --bg-surface-raised: #2D3042;
+  --bg-input: #1A1C26;
+  --bg-tint: rgba(255, 107, 94, 0.12);
+
+  --text-primary: #EDEDF2;
+  --text-secondary: #9497A8;
+  --text-tertiary: #6B6E80;
+
+  --border-subtle: #2A2C38;
+  --border-strong: #3A3D4D;
+
+  --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-float: 0 4px 16px rgba(0, 0, 0, 0.28);
+
+  color-scheme: dark;
+}
+
+/* ==========================================================================
+   LIGHT
+   ========================================================================== */
+:root[data-theme="light"] {
+  --bg-app: #F7F6F9;
+  --bg-rail: #EFEEF4;
+  --bg-channels: #FFFFFF;
+  --bg-chat: #FBFAFC;
+  --bg-surface: #EDE9F7;
+  --bg-surface-raised: #FFFFFF;
+  --bg-input: #FFFFFF;
+  --bg-tint: rgba(232, 84, 73, 0.08);
+
+  --text-primary: #1C1D26;
+  --text-secondary: #6C6E80;
+  --text-tertiary: #9497A8;
+
+  --border-subtle: #E2E0EA;
+  --border-strong: #CFCCDA;
+
+  --shadow-raised: 0 8px 24px rgba(28, 29, 38, 0.12);
+  --shadow-float: 0 4px 16px rgba(28, 29, 38, 0.08);
+
+  /* В светлой теме коралл притемнён для контраста на белом */
+  --color-accent: #E85449;
+  --color-accent-hover: #D64638;
+
+  color-scheme: light;
+}
+
+/* ==========================================================================
+   AMOLED (чистый чёрный)
+   ========================================================================== */
+:root[data-theme="amoled"] {
+  --bg-app: #000000;
+  --bg-rail: #000000;
+  --bg-channels: #0A0A0D;
+  --bg-chat: #000000;
+  --bg-surface: #17171C;
+  --bg-surface-raised: #1C1C22;
+  --bg-input: #0D0D10;
+  --bg-tint: rgba(255, 122, 110, 0.1);
+
+  --text-primary: #F2F2F5;
+  --text-secondary: #7D7E8A;
+  --text-tertiary: #55566A;
+
+  --border-subtle: #1C1C22;
+  --border-strong: #26262E;
+
+  --shadow-raised: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-float: 0 4px 16px rgba(0, 0, 0, 0.5);
+
+  /* Чуть ярче, чтобы не теряться на чистом чёрном */
+  --color-accent: #FF7A6E;
+  --color-accent-hover: #FF9A86;
+
+  color-scheme: dark;
+}
+
+/* Плавный кросс-фейд поверхностей при смене темы вместо резкого мигания */
+* {
+  transition: background-color var(--dur-slow) var(--ease-standard),
+    border-color var(--dur-slow) var(--ease-standard),
+    color var(--dur-slow) var(--ease-standard);
+}

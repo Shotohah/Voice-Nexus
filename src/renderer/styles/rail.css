@@ -1,0 +1,123 @@
+/* ==========================================================================
+   Колонка 1 — рейл серверов
+   ========================================================================== */
+
+.rail {
+  width: var(--rail-width);
+  flex-shrink: 0;
+  background: var(--bg-rail);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12px 0;
+  gap: 8px;
+  overflow-y: auto;
+}
+
+.rail-item {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 0;
+}
+
+/* Индикатор активного/непрочитанного сервера слева */
+.rail-item__indicator {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 4px;
+  border-radius: 0 4px 4px 0;
+  background: var(--text-primary);
+  transform: translateY(-50%);
+  height: 0;
+  transition: height var(--dur-base) var(--ease-spring),
+    background-color var(--dur-base) var(--ease-standard);
+}
+
+.rail-item--active .rail-item__indicator {
+  height: 32px;
+  background: var(--color-accent);
+}
+
+.rail-item--unread:not(.rail-item--active) .rail-item__indicator {
+  height: 8px;
+}
+
+.rail-item__icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%; /* по умолчанию круг, на hover/активности — сквircle */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 15px;
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: border-radius var(--dur-base) var(--ease-spring),
+    transform var(--dur-base) var(--ease-spring),
+    background-color var(--dur-base) var(--ease-standard),
+    color var(--dur-base) var(--ease-standard);
+}
+
+.rail-item__icon:hover {
+  border-radius: var(--radius-lg);
+  transform: scale(1.08);
+  color: var(--text-primary);
+}
+
+.rail-item--active .rail-item__icon {
+  border-radius: var(--radius-lg);
+  background: var(--color-accent);
+  color: #1C1200;
+}
+
+.rail-divider {
+  width: 32px;
+  height: 1px;
+  background: var(--border-subtle);
+  margin: 4px 0;
+}
+
+.rail-item__icon--add {
+  color: var(--color-accent);
+  font-size: 20px;
+  border: 1.5px dashed var(--border-strong);
+  background: transparent;
+}
+
+.rail-item__icon--add:hover {
+  background: var(--bg-tint);
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+.rail-tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%) scale(0.92);
+  background: var(--bg-surface-raised);
+  color: var(--text-primary);
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  box-shadow: var(--shadow-float);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 20;
+  transition: opacity var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+.rail-item:hover .rail-tooltip {
+  opacity: 1;
+  transform: translateY(-50%) scale(1);
+}

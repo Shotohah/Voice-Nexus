@@ -1,0 +1,295 @@
+/* ==========================================================================
+   Экран голосового канала
+   ========================================================================== */
+
+.voice-screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.voice-screen__header {
+  height: 52px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.voice-screen__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 15.5px;
+}
+
+.voice-screen__title-icon {
+  color: var(--color-accent);
+}
+
+.voice-screen__header-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.voice-screen__grid-wrap {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px 24px;
+  display: flex;
+  /* safe center: центрируем, когда контент помещается, но не обрезаем
+     верх при overflow — без safe обычный center делает верх недоступным
+     для скролла в flex-контейнере */
+  align-items: safe center;
+  justify-content: center;
+}
+
+.voice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 20px;
+  max-width: 760px;
+  width: 100%;
+}
+
+.voice-card {
+  position: relative;
+  background: var(--bg-surface);
+  border-radius: var(--radius-xl);
+  padding: 28px 16px 18px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  min-height: 180px;
+  justify-content: center;
+  border: 1px solid var(--border-subtle);
+  transition: border-color var(--dur-base) var(--ease-standard);
+}
+
+.voice-card--speaking {
+  border-color: rgba(var(--color-accent-rgb), 0.4);
+}
+
+.voice-card--screenshare {
+  grid-column: span 2;
+  aspect-ratio: 16 / 9;
+  padding: 0;
+  overflow: hidden;
+  background: #0A0A0D;
+}
+
+.voice-card__screen-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+  font-size: 13px;
+  background:
+    repeating-linear-gradient(135deg, #15161C 0 2px, #0A0A0D 2px 24px);
+}
+
+.voice-card__screen-label {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  background: rgba(0, 0, 0, 0.55);
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+}
+
+/* ---- Осциллограмма вокруг аватара ---- */
+.voice-avatar-wrap {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.voice-avatar-wrap__wave {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.voice-avatar-wrap__wave circle {
+  fill: none;
+  stroke: var(--color-accent);
+  stroke-width: 2;
+  opacity: 0;
+  transition: opacity var(--dur-base) var(--ease-standard);
+}
+
+/* Три концентрических кольца пульсируют с разной фазой, пока идёт речь */
+.voice-card--speaking .voice-avatar-wrap__wave circle {
+  opacity: 1;
+  animation: voice-wave-pulse 1.6s var(--ease-standard) infinite;
+}
+
+.voice-card--speaking .voice-avatar-wrap__wave circle:nth-child(1) { animation-delay: 0s; }
+.voice-card--speaking .voice-avatar-wrap__wave circle:nth-child(2) { animation-delay: 0.35s; }
+.voice-card--speaking .voice-avatar-wrap__wave circle:nth-child(3) { animation-delay: 0.7s; }
+
+.voice-card--muted .voice-avatar-wrap__wave circle {
+  stroke: var(--text-tertiary);
+  opacity: 0;
+}
+
+.voice-avatar {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 600;
+  color: #fff;
+  z-index: 1;
+  transition: filter var(--dur-base) var(--ease-standard);
+}
+
+.voice-card--muted .voice-avatar {
+  filter: grayscale(0.6) brightness(0.75);
+}
+
+.voice-card__mic-badge {
+  position: absolute;
+  bottom: -2px;
+  right: -2px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  background: var(--bg-surface-raised);
+  border: 2px solid var(--bg-surface);
+  z-index: 2;
+}
+
+.voice-card__mic-badge--muted {
+  color: var(--status-dnd);
+}
+
+.voice-card__mic-badge--active {
+  color: var(--color-accent);
+}
+
+.voice-card__name {
+  font-size: 14px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+.voice-card__status-label {
+  font-size: 11.5px;
+  color: var(--text-tertiary);
+}
+
+.voice-card__status-label--speaking {
+  color: var(--color-accent);
+  font-weight: 600;
+}
+
+/* ---- Плавающая панель управления ---- */
+.voice-controls-wrap {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 24px;
+}
+
+.voice-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--bg-surface-raised);
+  border-radius: var(--radius-pill);
+  padding: 10px 14px;
+  box-shadow: var(--shadow-raised);
+}
+
+.voice-controls__rec {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.voice-controls__rec-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--status-dnd);
+  animation: rec-blink 1.6s ease-in-out infinite;
+}
+
+.voice-controls__divider {
+  width: 1px;
+  height: 24px;
+  background: var(--border-subtle);
+  margin: 0 4px;
+}
+
+.voice-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  color: var(--text-primary);
+  background: var(--bg-surface);
+  transition: transform var(--dur-fast) var(--ease-spring),
+    background-color var(--dur-fast) var(--ease-standard);
+}
+
+.voice-btn:hover {
+  transform: translateY(-2px);
+  background: var(--bg-input);
+}
+
+.voice-btn:active {
+  transform: translateY(0) scale(0.95);
+}
+
+.voice-btn--off {
+  background: var(--status-dnd);
+  color: #fff;
+}
+
+.voice-btn--leave {
+  background: var(--status-dnd);
+  color: #fff;
+  width: auto;
+  padding: 0 18px;
+  border-radius: var(--radius-pill);
+  gap: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.voice-btn--leave:hover {
+  background: #e05850;
+}
