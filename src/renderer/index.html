@@ -2,7 +2,17 @@
 <html lang="ru" data-theme="dark">
 <head>
   <meta charset="UTF-8" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:;" />
+  <!--
+    connect-src расширен для реальной голосовой связи через LiveKit:
+    - http://localhost:4000 и ws://localhost:4000 — обращение к токен-серверу
+      за JWT (в деве; при деплое токен-сервера в интернет этот адрес нужно
+      заменить на его реальный https-домен);
+    - https://*.livekit.cloud и wss://*.livekit.cloud — сигнальное соединение
+      и WebRTC/медиа-данные до LiveKit Cloud.
+    Остальные директивы — как раньше: скрипты/стили только из своего же
+    приложения (плюс шрифты с Google Fonts).
+  -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'self'; img-src 'self' data:; connect-src 'self' http://localhost:4000 ws://localhost:4000 https://*.livekit.cloud wss://*.livekit.cloud;" />
   <title>Voice Nexus</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />

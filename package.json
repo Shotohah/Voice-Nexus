@@ -24,7 +24,8 @@
     },
     "files": [
       "src/**/*",
-      "!**/*.map"
+      "!**/*.map",
+      "!src/renderer/vendor/*.mjs.map"
     ],
     "win": {
       "target": [
@@ -53,6 +54,7 @@
   },
   "dependencies": {
     "electron-log": "^5.4.4",
-    "electron-updater": "^6.8.11"
+    "electron-updater": "^6.8.11",
+    "livekit-client": "^2.23.0"
   }
 }

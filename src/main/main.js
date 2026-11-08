@@ -1,8 +1,24 @@
-const { app, BrowserWindow, ipcMain, nativeTheme } = require('electron');
+const { app, BrowserWindow, ipcMain, nativeTheme, session } = require('electron');
 const path = require('path');
 const { initAutoUpdates } = require('./updater');
 
 let mainWindow = null;
+
+// Электрон по умолчанию отклоняет запросы на доступ к микрофону/камере —
+// это осознанная настройка безопасности, которую нужно явно ослабить для
+// голосовых каналов (LiveKit publish'ит аудио-трек с реального микрофона).
+// Разрешаем только 'media' и только нашему же приложению (permission
+// request handler получает origin запроса — для file://-страницы
+// приложения это безопасно, т.к. мы не грузим сторонний контент).
+function setupMediaPermissions() {
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'media') {
+      callback(true);
+      return;
+    }
+    callback(false);
+  });
+}
 
 function createWindow() {
   mainWindow = new BrowserWindow({
@@ -32,6 +48,7 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+  setupMediaPermissions();
   createWindow();
 
   // Проверка обновлений молчит в режиме разработки (npm start) — это

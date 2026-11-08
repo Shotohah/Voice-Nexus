@@ -34,7 +34,7 @@ function renderAll() {
 
   if (state.activeChannelType === 'voice') {
     stopVoiceAnimation();
-    renderVoiceScreen(contentEl, channel.name);
+    renderVoiceScreen(contentEl, channel);
     renderMembers(membersEl, false);
   } else {
     // Перерисовываем чат только при смене канала — иначе сбивали бы
