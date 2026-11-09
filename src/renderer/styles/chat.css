@@ -188,6 +188,21 @@
   color: var(--text-secondary);
 }
 
+/* Реакция, которую поставил я сам — сплошная заливка, чтобы было видно,
+   что повторный клик её СНИМЕТ (toggle), а не добавит ещё одну. */
+.msg-reaction--mine {
+  background: rgba(var(--color-accent-rgb), 0.35);
+  border-color: var(--color-accent);
+}
+
+.msg-reaction--mine .msg-reaction__count {
+  color: var(--text-primary);
+}
+
+.msg-reaction--mine:hover {
+  background: rgba(var(--color-accent-rgb), 0.45);
+}
+
 .msg-attachment {
   display: flex;
   align-items: center;

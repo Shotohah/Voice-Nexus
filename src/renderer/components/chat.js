@@ -1,9 +1,6 @@
 import { MESSAGES, USERS } from '../data.js';
 import { getActiveChannel, getState } from '../store.js';
 
-let typingTimeoutId = null;
-let typingIndicatorEl = null;
-
 export function renderChat(container) {
   const channel = getActiveChannel();
   if (!channel) {
@@ -26,7 +23,6 @@ export function renderChat(container) {
       </div>
     </header>
     <div class="chat__scroll" id="chat-scroll"></div>
-    <div class="typing-indicator" id="typing-indicator" aria-live="polite"></div>
     <div class="chat__composer">
       <form class="composer" id="composer-form">
         <input
@@ -61,9 +57,7 @@ export function renderChat(container) {
 
   scroll.scrollTop = scroll.scrollHeight;
 
-  typingIndicatorEl = container.querySelector('#typing-indicator');
   setupComposer(container, channel, scroll);
-  simulateTypingPreview(channel);
 }
 
 function renderMessageGroups(scroll, messages) {
@@ -133,21 +127,42 @@ function buildMessageGroupEl(group) {
       const reactionsEl = document.createElement('div');
       reactionsEl.className = 'msg-reactions';
       msg.reactions.forEach((r) => {
-        const chip = document.createElement('button');
-        chip.type = 'button';
-        chip.className = 'msg-reaction';
-        chip.innerHTML = `<span>${r.emoji}</span><span class="msg-reaction__count">${r.count}</span>`;
-        chip.addEventListener('click', () => {
-          r.count += 1;
-          chip.querySelector('.msg-reaction__count').textContent = String(r.count);
-        });
-        reactionsEl.appendChild(chip);
+        reactionsEl.appendChild(buildReactionChip(r));
       });
       body.appendChild(reactionsEl);
     }
   });
 
   return el;
+}
+
+// Реакция — это toggle (как в Discord): клик ставит свою реакцию (+1 к
+// счётчику, подсветка), повторный клик снимает её (-1, подсветка пропадает).
+// Раньше счётчик просто бесконечно рос на каждый клик без ограничений —
+// r.reactedByMe помнит, стоит ли СВОЯ реакция, чтобы было что переключать.
+function buildReactionChip(r) {
+  const chip = document.createElement('button');
+  chip.type = 'button';
+
+  const render = () => {
+    chip.className = `msg-reaction${r.reactedByMe ? ' msg-reaction--mine' : ''}`;
+    chip.setAttribute('aria-pressed', String(Boolean(r.reactedByMe)));
+    chip.innerHTML = `<span>${r.emoji}</span><span class="msg-reaction__count">${r.count}</span>`;
+  };
+  render();
+
+  chip.addEventListener('click', () => {
+    if (r.reactedByMe) {
+      r.count = Math.max(0, r.count - 1);
+      r.reactedByMe = false;
+    } else {
+      r.count += 1;
+      r.reactedByMe = true;
+    }
+    render();
+  });
+
+  return chip;
 }
 
 function setupComposer(container, channel, scroll) {
@@ -184,37 +199,6 @@ function setupComposer(container, channel, scroll) {
       scroll.scrollTop = scroll.scrollHeight;
     }, 550);
   });
-}
-
-// Демонстрация индикатора печати: раз в несколько секунд "кто-то" печатает,
-// чтобы на статичном экране было видно анимацию из концепта.
-function simulateTypingPreview(channel) {
-  clearTimeout(typingTimeoutId);
-  if (!typingIndicatorEl) return;
-
-  const candidates = ['anya', 'max', 'ira'].filter((id) => id !== 'me');
-  const typer = USERS[candidates[Math.floor(Math.random() * candidates.length)]];
-
-  const show = () => {
-    if (!typingIndicatorEl || !document.body.contains(typingIndicatorEl)) return;
-    typingIndicatorEl.innerHTML = `
-      <span>${escapeHtml(typer.name.split(' ')[0])} печатает</span>
-      <span class="typing-indicator__dots">
-        <span class="typing-indicator__dot"></span>
-        <span class="typing-indicator__dot"></span>
-        <span class="typing-indicator__dot"></span>
-      </span>
-    `;
-    typingTimeoutId = setTimeout(hide, 3200);
-  };
-
-  const hide = () => {
-    if (!typingIndicatorEl) return;
-    typingIndicatorEl.innerHTML = '';
-    typingTimeoutId = setTimeout(show, 4500 + Math.random() * 3000);
-  };
-
-  typingTimeoutId = setTimeout(show, 2000);
 }
 
 function escapeHtml(str) {

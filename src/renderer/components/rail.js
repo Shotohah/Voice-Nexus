@@ -1,5 +1,6 @@
 import { SERVERS } from '../data.js';
 import { getState, selectServer } from '../store.js';
+import { openCreateServerModal } from './create-server-modal.js';
 
 export function renderRail(container) {
   const state = getState();
@@ -47,6 +48,13 @@ export function renderRail(container) {
     <div class="rail-item__icon rail-item__icon--add">+</div>
     <span class="rail-tooltip">Добавить сервер</span>
   `;
+  addItem.addEventListener('click', openCreateServerModal);
+  addItem.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      openCreateServerModal();
+    }
+  });
   container.appendChild(addItem);
 }
 

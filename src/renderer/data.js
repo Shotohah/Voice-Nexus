@@ -66,13 +66,12 @@ export const SERVERS = [
         id: 'voice',
         label: 'Голосовые',
         type: 'voice',
+        // "members" у голосовых каналов здесь не нужен: реальный список
+        // участников звонка приходит из LiveKit (см. livekit.js
+        // collectParticipants), а не из этих демо-данных.
         channels: [
-          {
-            id: 'lounge',
-            name: 'lounge',
-            members: ['anya', 'max', 'ira']
-          },
-          { id: 'studio', name: 'studio', members: [] }
+          { id: 'lounge', name: 'lounge' },
+          { id: 'studio', name: 'studio' }
         ]
       }
     ]
@@ -93,7 +92,7 @@ export const SERVERS = [
         id: 'voice',
         label: 'Голосовые',
         type: 'voice',
-        channels: [{ id: 'jam', name: 'jam-session', members: [] }]
+        channels: [{ id: 'jam', name: 'jam-session' }]
       }
     ]
   },
@@ -113,57 +112,25 @@ export const SERVERS = [
   }
 ];
 
+// Список участников (правая панель) — по той же причине, что и USERS выше,
+// здесь больше нет придуманных людей. Единственный реальный участник
+// приложения — USERS.me, но он не показывается в списке "соседей по
+// серверу" (так и было в исходной вёрстке, см. renderMembers в
+// components/members.js: цикл идёт по MEMBERS_BY_PRESENCE, а не по USERS).
 export const MEMBERS_BY_PRESENCE = {
-  online: ['anya', 'max', 'ira'],
+  online: [],
   idle: [],
   dnd: [],
-  offline: ['olga', 'gleb']
+  offline: []
 };
 
-// Сообщения по каналам: id канала → массив сообщений
+// Сообщения по каналам: id канала → массив сообщений. Демо-переписка
+// придуманных людей убрана вместе с ними — каналы просто пусты, пока
+// реальный человек сам что-то не напишет (см. "Пока тихо" в chat.js).
 export const MESSAGES = {
-  general: [
-    {
-      id: 'm1',
-      authorId: 'anya',
-      time: '14:02',
-      text: 'Го сегодня в lounge в 8? 🎮',
-      reactions: [
-        { emoji: '😂', count: 3 },
-        { emoji: '🔥', count: 1 }
-      ]
-    },
-    {
-      id: 'm2',
-      authorId: 'max',
-      time: '14:05',
-      text: 'да го! закину пресет для стрима',
-      attachment: { name: 'preset_stream_v3.zip', size: '2.4 MB' }
-    },
-    {
-      id: 'm3',
-      authorId: 'ira',
-      time: '14:11',
-      text: 'о красиво, кину потом фидбек по звуку',
-      reactions: [{ emoji: '👍', count: 2 }]
-    }
-  ],
-  memes: [
-    {
-      id: 'm4',
-      authorId: 'max',
-      time: '11:20',
-      text: 'нашёл идеальный мем для нашего чата'
-    }
-  ],
+  general: [],
+  memes: [],
   feedback: [],
-  'general-2': [
-    {
-      id: 'm5',
-      authorId: 'olga',
-      time: 'вчера',
-      text: 'как прошла джем-сессия?'
-    }
-  ],
+  'general-2': [],
   'general-3': []
 };

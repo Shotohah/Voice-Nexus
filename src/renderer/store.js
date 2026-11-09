@@ -117,6 +117,63 @@ export function leaveVoice() {
   notify();
 }
 
+// Создаёт новый сервер (кнопка "+" на рельсе) и сразу переключается на
+// него — тем же путём, что и обычный selectServer, но для сервера, который
+// только что появился: сразу открываем его первый текстовый канал.
+// Возвращает созданный сервер.
+export function createServer(name) {
+  const trimmed = (name || '').trim();
+  if (!trimmed) return null;
+
+  const id = generateServerId();
+  const shortName = trimmed
+    .split(/\s+/)
+    .map((w) => w[0])
+    .slice(0, 2)
+    .join('')
+    .toUpperCase() || '??';
+
+  const textChannelId = `${id}-general`;
+  const server = {
+    id,
+    name: trimmed,
+    shortName,
+    unread: false,
+    channelGroups: [
+      {
+        id: 'text',
+        label: 'Текстовые',
+        type: 'text',
+        channels: [{ id: textChannelId, name: 'general', unread: 0 }]
+      },
+      {
+        id: 'voice',
+        label: 'Голосовые',
+        type: 'voice',
+        channels: [{ id: `${id}-general-voice`, name: 'general' }]
+      }
+    ]
+  };
+
+  SERVERS.push(server);
+
+  state.activeServerId = server.id;
+  state.activeChannelId = textChannelId;
+  state.activeChannelType = 'text';
+  notify();
+
+  return server;
+}
+
+// 'srv-<n>' — простой инкрементирующий id, которого ещё нет среди
+// существующих серверов (на случай, если когда-нибудь появится srv-1 и
+// т.п. в демо-данных).
+function generateServerId() {
+  let n = SERVERS.length + 1;
+  while (SERVERS.some((s) => s.id === `srv-${n}`)) n += 1;
+  return `srv-${n}`;
+}
+
 // Для плашки активного звонка: имя канала/сервера, где реально идёт
 // LiveKit-соединение (может отличаться от того, что сейчас отображается).
 // null, если звонка сейчас нет вообще.

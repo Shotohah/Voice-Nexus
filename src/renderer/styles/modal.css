@@ -1,0 +1,150 @@
+/* ==========================================================================
+   Универсальная модалка (сейчас используется для "Создать сервер")
+   ========================================================================== */
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: modal-fade-in var(--dur-base) var(--ease-standard);
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.modal-card {
+  width: 420px;
+  max-width: calc(100vw - 32px);
+  background: var(--bg-surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-float);
+  padding: 20px 22px 22px;
+  animation: modal-pop-in var(--dur-base) var(--ease-spring);
+}
+
+@keyframes modal-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.modal-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.modal-card__title {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.modal-card__close {
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  font-size: 14px;
+  transition: background-color var(--dur-fast) var(--ease-standard),
+    color var(--dur-fast) var(--ease-standard);
+}
+
+.modal-card__close:hover {
+  background: var(--bg-tint);
+  color: var(--text-primary);
+}
+
+.modal-card__hint {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 16px;
+}
+
+.modal-card__input {
+  width: 100%;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  font-size: 14.5px;
+  font-family: var(--font-ui);
+  color: var(--text-primary);
+  transition: border-color var(--dur-fast) var(--ease-standard);
+}
+
+.modal-card__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+}
+
+.modal-card__input::placeholder {
+  color: var(--text-tertiary);
+}
+
+.modal-card__error {
+  color: var(--status-dnd);
+  font-size: 12.5px;
+  margin-top: 8px;
+}
+
+.modal-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.modal-card__btn {
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: background-color var(--dur-fast) var(--ease-standard),
+    transform var(--dur-fast) var(--ease-spring);
+}
+
+.modal-card__btn:active {
+  transform: scale(0.97);
+}
+
+.modal-card__btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.modal-card__btn--ghost:hover {
+  background: var(--bg-tint);
+  color: var(--text-primary);
+}
+
+.modal-card__btn--primary {
+  background: var(--color-accent);
+  color: #1C1200;
+}
+
+.modal-card__btn--primary:hover {
+  filter: brightness(1.08);
+}
