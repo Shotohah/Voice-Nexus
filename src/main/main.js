@@ -29,7 +29,14 @@ function createWindow() {
     backgroundColor: '#15161C',
     title: 'Voice Nexus',
     icon: path.join(__dirname, '..', 'assets', 'icon.png'),
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
+    // Приложение рисует собственный titlebar (кнопки свернуть/развернуть/
+    // закрыть в index.html, управляются через IPC ниже) — значит системная
+    // рамка Windows должна быть выключена, иначе поверх неё дублируется
+    // второй набор точно таких же кнопок. На macOS вместо frame: false
+    // используется hiddenInset — там рамку убирать не нужно, трафик-лайты
+    // остаются системными, просто без заголовка поверх контента.
+    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : undefined,
+    frame: process.platform === 'darwin',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,

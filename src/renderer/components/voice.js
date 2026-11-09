@@ -3,23 +3,25 @@ import { leaveVoice, getState } from '../store.js';
 import {
   joinVoiceChannel,
   leaveVoiceChannel,
+  clearHandlers,
   setMicrophoneEnabled,
   setScreenShareEnabled,
   getLocalAudioMediaStreamTrack,
   getRemoteAudioMediaStreamTrack
 } from '../livekit.js';
 
+// ----------------------------------------------------------------------------
+// Жизненный цикл: показ голосового ЭКРАНА и само звонковое СОЕДИНЕНИЕ — это
+// две разные вещи, которые могут жить независимо (как в Discord — ушёл
+// смотреть другой сервер, а разговор идёт дальше в фоне). renderVoiceScreen
+// строит DOM и подписывается на события текущего звонка; detachVoiceScreen
+// отписывается от DOM при уходе с экрана, но звонок НЕ разрывает;
+// endVoiceCall — настоящий выход из звонка (кнопка "Выйти").
+// ----------------------------------------------------------------------------
+
 let rafId = null;
-let recSeconds = 724; // 12:04 демо-таймер записи — сама запись пока не настоящая
-let currentContainer = null;
-let currentParticipants = []; // последний снимок участников из LiveKit
-let micEnabled = true;
-let joinToken = 0; // счётчик на случай быстрого выхода/входа, чтобы не гонять колбэки устаревшего подключения
 
 export function renderVoiceScreen(container, channel) {
-  currentContainer = container;
-  const myToken = ++joinToken;
-
   container.innerHTML = `
     <div class="voice-screen">
       <header class="voice-screen__header">
@@ -39,11 +41,6 @@ export function renderVoiceScreen(container, channel) {
       </div>
       <div class="voice-controls-wrap">
         <div class="voice-controls">
-          <span class="voice-controls__rec">
-            <span class="voice-controls__rec-dot" aria-hidden="true"></span>
-            <span id="rec-timer">REC 12:04</span>
-          </span>
-          <span class="voice-controls__divider" aria-hidden="true"></span>
           <button class="voice-btn" id="voice-btn-mic" title="Микрофон" aria-label="Переключить микрофон" aria-pressed="true">🎤</button>
           <button class="voice-btn" id="voice-btn-deaf" title="Наушники" aria-label="Переключить звук">🎧</button>
           <button class="voice-btn" id="voice-btn-cam" title="Камера" aria-label="Переключить камеру">📷</button>
@@ -58,38 +55,67 @@ export function renderVoiceScreen(container, channel) {
   `;
 
   wireControls(container);
-  startRecTimer(container);
 
   const username = USERS.me.name;
   const roomName = channel.id;
 
+  // joinVoiceChannel сам решает: если мы уже в этой же комнате (вернулись
+  // на экран звонка, который шёл в фоне) — не переподключается по сети,
+  // просто перепривязывает эти handlers и сразу отдаёт текущее состояние.
   joinVoiceChannel(username, roomName, {
     onConnectionStateChanged: (state) => {
-      if (myToken !== joinToken || !document.body.contains(container)) return;
+      if (!document.body.contains(container)) return;
       renderConnectionStatus(container, state);
     },
     onParticipantsChanged: (participants) => {
-      if (myToken !== joinToken || !document.body.contains(container)) return;
-      currentParticipants = participants;
+      if (!document.body.contains(container)) return;
       renderParticipants(container, participants);
+      syncMicButton(container, participants);
     },
     onError: (err) => {
-      if (myToken !== joinToken || !document.body.contains(container)) return;
+      if (!document.body.contains(container)) return;
       showBanner(container, err.message);
+    },
+    onRoomDisconnected: () => {
+      // Сервер/сеть разорвали звонок сами (не наш явный "Выйти") — стор
+      // должен узнать об этом, чтобы убрать плашку активного звонка и
+      // саму отметку "мы в голосовом канале", иначе она зависнет навсегда.
+      leaveVoice();
     }
   });
 }
 
-// Вызывается при уходе из голосового экрана (смена канала, выход из звонка,
-// закрытие приложения) — обязательно отключается от LiveKit Room, иначе
-// микрофон продолжит публиковаться в комнату после ухода с экрана.
-export function stopVoiceAnimation() {
+// Уход с голосового ЭКРАНА (сменили канал/сервер на что-то другое, пока
+// показывался этот экран) — звонок сам по себе НЕ разрывается, просто
+// прекращаем перерисовывать DOM, которого уже нет на странице.
+export function detachVoiceScreen() {
   cancelAnimationFrame(rafId);
   rafId = null;
-  joinToken++; // инвалидируем колбэки уже закрытого подключения
-  currentContainer = null;
-  currentParticipants = [];
+  clearHandlers();
+}
+
+// Настоящий выход из звонка — кнопка "Выйти" на голосовом экране. В отличие
+// от detachVoiceScreen, здесь LiveKit-соединение закрывается по-настоящему:
+// комната покидается, публикация микрофона прекращается.
+export function endVoiceCall() {
+  cancelAnimationFrame(rafId);
+  rafId = null;
   leaveVoiceChannel();
+}
+
+// Кнопка мьюта отражает РЕАЛЬНОЕ состояние локального трека (пришедшее от
+// LiveKit через onParticipantsChanged) вместо отдельной локальной
+// переменной — иначе при возврате на экран звонка, идущего в фоне, кнопка
+// могла бы показывать "микрофон включён", пока он на самом деле выключен
+// (состояние, выставленное до ухода с экрана, не пережило бы пересборку DOM).
+function syncMicButton(container, participants) {
+  const micBtn = container.querySelector('#voice-btn-mic');
+  if (!micBtn) return;
+  const local = participants.find((p) => p.isLocal);
+  if (!local) return;
+  const enabled = !local.muted;
+  micBtn.setAttribute('aria-pressed', String(enabled));
+  micBtn.classList.toggle('voice-btn--off', !enabled);
 }
 
 function renderConnectionStatus(container, state) {
@@ -177,11 +203,9 @@ function buildVoiceCard(participant) {
 // identity участника — это username, который ввели при входе (см.
 // setCurrentUsername в data.js и joinVoiceChannel в livekit.js). Если это
 // наш собственный логин — берём готовую карточку USERS.me; для реальных
-// собеседников извне (не из демо-списка USERS) строим карточку на лету.
+// собеседников извне строим карточку на лету из их identity.
 function resolveUser(identity) {
   if (identity === USERS.me.name) return USERS.me;
-  const known = Object.values(USERS).find((u) => u.name === identity);
-  if (known) return known;
   return {
     name: identity,
     initials: identity.slice(0, 2).toUpperCase(),
@@ -254,8 +278,7 @@ function ensureAnalyser(identity, mediaStreamTrack) {
 }
 
 // Текущая громкость говорящего участника (0..1), либо null, если трек
-// недоступен (демо-заглушка для случаев, когда реальный уровень взять
-// неоткуда — лучше тихая анимация, чем ошибка).
+// недоступен (лучше тихая анимация, чем ошибка).
 function readVolume(identity, participant) {
   const track = participant.isLocal
     ? getLocalAudioMediaStreamTrack()
@@ -298,21 +321,6 @@ function restartAmplitudeLoop(grid, participants) {
   rafId = requestAnimationFrame(tick);
 }
 
-function startRecTimer(container) {
-  const timerEl = container.querySelector('#rec-timer');
-  if (!timerEl) return;
-  const interval = setInterval(() => {
-    if (!document.body.contains(timerEl)) {
-      clearInterval(interval);
-      return;
-    }
-    recSeconds += 1;
-    const mm = String(Math.floor(recSeconds / 60)).padStart(2, '0');
-    const ss = String(recSeconds % 60).padStart(2, '0');
-    timerEl.textContent = `REC ${mm}:${ss}`;
-  }, 1000);
-}
-
 function wireControls(container) {
   const micBtn = container.querySelector('#voice-btn-mic');
   const deafBtn = container.querySelector('#voice-btn-deaf');
@@ -321,10 +329,14 @@ function wireControls(container) {
   const leaveBtn = container.querySelector('#voice-btn-leave');
 
   micBtn.addEventListener('click', () => {
-    micEnabled = !micEnabled;
-    micBtn.setAttribute('aria-pressed', String(micEnabled));
-    micBtn.classList.toggle('voice-btn--off', !micEnabled);
-    setMicrophoneEnabled(micEnabled).catch((err) => {
+    // Оптимистичный отклик по клику — реальное состояние всё равно придёт
+    // следом через onParticipantsChanged (syncMicButton) и перепишет это,
+    // если LiveKit в итоге решил иначе (см. комментарий у syncMicButton).
+    const wasEnabled = micBtn.getAttribute('aria-pressed') !== 'false';
+    const nextEnabled = !wasEnabled;
+    micBtn.setAttribute('aria-pressed', String(nextEnabled));
+    micBtn.classList.toggle('voice-btn--off', !nextEnabled);
+    setMicrophoneEnabled(nextEnabled).catch((err) => {
       showBanner(container, 'Не удалось переключить микрофон: ' + err.message);
     });
   });
@@ -354,7 +366,7 @@ function wireControls(container) {
   });
 
   leaveBtn.addEventListener('click', () => {
-    stopVoiceAnimation();
+    endVoiceCall();
     leaveVoice();
   });
 }

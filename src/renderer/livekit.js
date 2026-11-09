@@ -16,6 +16,18 @@ import { Room, RoomEvent, Track, ConnectionState } from './vendor/livekit-client
 const TOKEN_SERVER_URL = 'http://localhost:4000';
 
 let room = null;
+let currentRoomName = null;
+
+// Колбэки живут отдельно от room.on(...) — не в замыкании, а в переменной
+// модуля, которую можно перепривязать через setHandlers(). Это нужно,
+// чтобы при возврате на голосовой экран (новый DOM, новый container в
+// components/voice.js) можно было подключить свежие обработчики к уже
+// идущему звонку, не разрывая и не пересоздавая реальное WebRTC-соединение.
+let activeHandlers = {};
+
+function callHandler(name, ...args) {
+  activeHandlers[name]?.(...args);
+}
 
 // Запрашивает у токен-сервера подписанный JWT для входа в конкретную комнату
 // под конкретным именем пользователя. Секрет LiveKit здесь не фигурирует —
@@ -65,32 +77,58 @@ export class VoiceConnectionError extends Error {
 //     { identity, isLocal, speaking, muted, screenShareTrack, audioTrack }
 //   onConnectionStateChanged(state) — 'connecting' | 'connected' | 'disconnected' | 'reconnecting'
 //   onError(VoiceConnectionError)
+//
+// Если уже идёт звонок в ТОЙ ЖЕ комнате — не переподключается по сети,
+// просто перепривязывает handlers к новому DOM (см. setHandlers) и сразу
+// отдаёт текущее состояние через onConnectionStateChanged/onParticipantsChanged,
+// чтобы voice.js сразу увидел актуальную картину. Это то, что происходит
+// при возврате на голосовой экран звонка, который всё это время шёл в фоне.
 export async function joinVoiceChannel(username, roomName, handlers) {
+  if (room && currentRoomName === roomName) {
+    activeHandlers = handlers;
+    callHandler('onConnectionStateChanged', mapConnectionState(room.state));
+    callHandler('onParticipantsChanged', collectParticipants(room));
+    return room;
+  }
+
   if (room) {
     await leaveVoiceChannel();
   }
 
-  handlers.onConnectionStateChanged?.('connecting');
+  activeHandlers = handlers;
+  callHandler('onConnectionStateChanged', 'connecting');
 
   let token, url;
   try {
     ({ token, url } = await fetchToken(username, roomName));
   } catch (err) {
-    handlers.onConnectionStateChanged?.('disconnected');
-    handlers.onError?.(err);
+    callHandler('onConnectionStateChanged', 'disconnected');
+    callHandler('onError', err);
     return null;
   }
 
-  room = new Room({
+  const newRoom = new Room({
     adaptiveStream: true,
     dynacast: true
   });
 
   const emitParticipants = () => {
-    handlers.onParticipantsChanged?.(collectParticipants(room));
+    callHandler('onParticipantsChanged', collectParticipants(newRoom));
   };
 
-  room
+  // LiveKit SDK эмитит RoomEvent.Disconnected не только при разрыве УЖЕ
+  // установленного соединения, но и внутренне — как часть собственной
+  // очистки состояния — когда connect() вообще не смог подключиться (сеть
+  // недоступна, токен отклонён и т.п.), причём ДО того, как промис
+  // newRoom.connect() ниже успевает реджектиться в catch. Без этого флага
+  // такой неудачный ПЕРВЫЙ коннект приводил к двойной реакции: onError
+  // (из catch) и onRoomDisconnected → store.leaveVoice() (из этого
+  // обработчика) — то есть пользователя откатывало с голосового экрана
+  // обратно на текстовый канал при первой же сетевой ошибке, хотя реального
+  // звонка, который можно было бы "потерять", ещё не было.
+  let hasConnectedOnce = false;
+
+  newRoom
     .on(RoomEvent.ParticipantConnected, emitParticipants)
     .on(RoomEvent.ParticipantDisconnected, emitParticipants)
     .on(RoomEvent.TrackSubscribed, emitParticipants)
@@ -101,32 +139,49 @@ export async function joinVoiceChannel(username, roomName, handlers) {
     .on(RoomEvent.LocalTrackUnpublished, emitParticipants)
     .on(RoomEvent.ActiveSpeakersChanged, emitParticipants)
     .on(RoomEvent.ConnectionStateChanged, (state) => {
-      handlers.onConnectionStateChanged?.(mapConnectionState(state));
+      callHandler('onConnectionStateChanged', mapConnectionState(state));
     })
     .on(RoomEvent.Disconnected, () => {
-      handlers.onConnectionStateChanged?.('disconnected');
+      room = null;
+      currentRoomName = null;
+      callHandler('onConnectionStateChanged', 'disconnected');
+      if (hasConnectedOnce) {
+        // Тут звонок был реально установлен и теперь по-настоящему
+        // разорван сервером/сетью (не нашим явным leave) — стор должен об
+        // этом узнать, чтобы убрать плашку активного звонка, иначе она
+        // будет показывать "висящий" звонок, которого уже нет.
+        callHandler('onRoomDisconnected');
+      }
+      // Если hasConnectedOnce ещё false — это неудачная попытка ПЕРВОГО
+      // подключения; onError из catch-блока ниже уже сообщит об ошибке,
+      // а store трогать не нужно: activeVoiceChannelId был выставлен самим
+      // кликом по каналу (см. store.selectChannel) и должен остаться —
+      // человек всё ещё "смотрит" на этот голосовой экран, просто пока
+      // не подключился, и имеет право увидеть баннер ошибки и повторить.
     });
 
   try {
-    await room.connect(url, token);
+    await newRoom.connect(url, token);
   } catch (err) {
-    room = null;
-    handlers.onConnectionStateChanged?.('disconnected');
-    handlers.onError?.(
-      new VoiceConnectionError(
-        'room_connect_failed',
-        describeConnectError(err)
-      )
+    callHandler('onConnectionStateChanged', 'disconnected');
+    callHandler(
+      'onError',
+      new VoiceConnectionError('room_connect_failed', describeConnectError(err))
     );
     return null;
   }
+
+  hasConnectedOnce = true;
+  room = newRoom;
+  currentRoomName = roomName;
 
   try {
     await room.localParticipant.setMicrophoneEnabled(true);
   } catch (err) {
     // Не разрываем звонок из-за отказа в доступе к микрофону — человек
     // может слушать без права говорить (например, запретил доступ ОС).
-    handlers.onError?.(
+    callHandler(
+      'onError',
       new VoiceConnectionError(
         'microphone_unavailable',
         'Не удалось включить микрофон. Проверьте разрешения приложения на доступ к микрофону в настройках системы.'
@@ -134,16 +189,33 @@ export async function joinVoiceChannel(username, roomName, handlers) {
     );
   }
 
-  handlers.onConnectionStateChanged?.('connected');
+  callHandler('onConnectionStateChanged', 'connected');
   emitParticipants();
 
   return room;
+}
+
+// Перепривязывает обработчики к уже идущему звонку без переподключения —
+// используется, когда DOM голосового экрана пересоздался (вернулись на
+// него из фона), но сам LiveKit Room не трогаем.
+export function setHandlers(handlers) {
+  activeHandlers = handlers;
+}
+
+// Отписывает текущие обработчики, ничего не меняя в самом соединении —
+// используется, когда уходим с голосового экрана, но звонок остаётся идти
+// в фоне: DOM-колбэки больше не нужны (экрана, который их слушал, нет),
+// но Room и публикация микрофона должны продолжаться как есть.
+export function clearHandlers() {
+  activeHandlers = {};
 }
 
 export async function leaveVoiceChannel() {
   if (!room) return;
   const r = room;
   room = null;
+  currentRoomName = null;
+  activeHandlers = {};
   try {
     await r.disconnect();
   } catch (e) {
@@ -153,6 +225,10 @@ export async function leaveVoiceChannel() {
 
 export function getCurrentRoom() {
   return room;
+}
+
+export function getCurrentRoomName() {
+  return currentRoomName;
 }
 
 export async function setMicrophoneEnabled(enabled) {
@@ -221,6 +297,7 @@ function mapConnectionState(state) {
     case ConnectionState.Connected:
       return 'connected';
     case ConnectionState.Reconnecting:
+    case ConnectionState.SignalReconnecting:
       return 'reconnecting';
     case ConnectionState.Disconnected:
     default:

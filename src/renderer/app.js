@@ -2,7 +2,7 @@ import { renderRail } from './components/rail.js';
 import { renderChannels } from './components/channels.js';
 import { renderChat } from './components/chat.js';
 import { renderMembers } from './components/members.js';
-import { renderVoiceScreen, stopVoiceAnimation } from './components/voice.js';
+import { renderVoiceScreen, detachVoiceScreen } from './components/voice.js';
 import { renderAuthScreen } from './components/auth.js';
 import { setCurrentUsername } from './data.js';
 import { getActiveChannel, getState, setTheme, subscribe } from './store.js';
@@ -15,6 +15,14 @@ const mainLayoutEl = document.getElementById('main-layout');
 const authContainerEl = document.getElementById('auth-container');
 
 let lastRenderedChannelId = null;
+// Был ли ПРЕДЫДУЩИЙ рендер голосовым экраном — нужно отдельно от простого
+// "сменился ли канал", чтобы отличить две разные ситуации: (а) ушли с
+// голосового экрана на что-то другое — тогда зовём detachVoiceScreen,
+// чтобы отписаться от DOM-обновлений уже идущего в фоне звонка; (б) всё
+// ещё смотрим на тот же голосовой экран — тогда НЕ пересоздаём его DOM
+// заново на каждый notify() (например, когда LiveKit сам прислал новый
+// список участников и где-то в сторе дёрнулся notify по другой причине).
+let wasShowingVoiceScreen = false;
 
 function renderAll() {
   const state = getState();
@@ -27,16 +35,30 @@ function renderAll() {
   lastRenderedChannelId = channel?.id ?? null;
 
   if (!channel) {
+    if (wasShowingVoiceScreen) detachVoiceScreen();
+    wasShowingVoiceScreen = false;
     contentEl.innerHTML = '';
     renderMembers(membersEl, false);
     return;
   }
 
-  if (state.activeChannelType === 'voice') {
-    stopVoiceAnimation();
-    renderVoiceScreen(contentEl, channel);
+  const showingVoiceScreen = state.activeChannelType === 'voice';
+
+  if (showingVoiceScreen) {
+    // Рисуем DOM заново только если реально сменился канал, на который
+    // смотрим (или только что зашли на голосовой экран) — иначе каждый
+    // notify() пересоздавал бы сетку участников с нуля без необходимости.
+    if (channelChanged || !wasShowingVoiceScreen) {
+      renderVoiceScreen(contentEl, channel);
+    }
     renderMembers(membersEl, false);
   } else {
+    if (wasShowingVoiceScreen) {
+      // Ушли с голосового экрана на чат/другой сервер — отписываемся от
+      // его DOM-обновлений. Сам звонок (LiveKit Room) не трогаем: если
+      // activeVoiceChannelId всё ещё задан, он продолжает идти в фоне.
+      detachVoiceScreen();
+    }
     // Перерисовываем чат только при смене канала — иначе сбивали бы
     // локальный ввод/индикатор печати при каждом тике стора.
     if (channelChanged) {
@@ -44,6 +66,8 @@ function renderAll() {
     }
     renderMembers(membersEl, true);
   }
+
+  wasShowingVoiceScreen = showingVoiceScreen;
 }
 
 subscribe(() => renderAll());

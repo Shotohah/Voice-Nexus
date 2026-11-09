@@ -120,55 +120,97 @@
   padding: 0 5px;
 }
 
-/* ---- Голосовой канал: мини-превью говорящих участников прямо в сайдбаре ---- */
-.voice-preview {
-  margin: 2px 0 4px 26px;
-  padding-left: 10px;
-  border-left: 1.5px solid var(--border-subtle);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+/* ---- Голосовой канал, к которому подключено реальное LiveKit-соединение
+   прямо сейчас (возможно, в фоне) — подсвечиваем в списке каналов ---- */
+.channel-item--voice-live .channel-item__icon {
+  color: var(--color-accent);
 }
 
-.voice-preview__member {
+.channel-item--voice-live::after {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 18px;
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+}
+
+/* ---- Плашка активного звонка: идёт в фоне, пока смотрим на другой
+   сервер/канал — клик по названию возвращает на его экран, как в Discord ---- */
+.active-call-banner {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 3px 0;
-  font-size: 12.5px;
-  color: var(--text-secondary);
+  gap: 8px;
+  padding: 10px 12px;
+  background: rgba(var(--color-accent-rgb), 0.1);
+  border-top: 1px solid var(--border-subtle);
 }
 
-.voice-preview__avatar {
-  position: relative;
-  width: 18px;
-  height: 18px;
+.active-call-banner__info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  margin: -2px -4px;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+
+.active-call-banner__info:hover {
+  background: rgba(var(--color-accent-rgb), 0.12);
+}
+
+.active-call-banner__dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
+  background: var(--color-accent);
+  animation: pulse-ring 1.6s var(--ease-standard) infinite;
+}
+
+.active-call-banner__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.active-call-banner__title {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.active-call-banner__subtitle {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.active-call-banner__leave {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 9px;
-  font-weight: 700;
-  color: #fff;
-  flex-shrink: 0;
+  border-radius: var(--radius-sm);
+  color: var(--color-accent);
+  font-size: 13px;
+  transform: rotate(135deg);
+  transition: background-color var(--dur-fast) var(--ease-standard);
 }
 
-.voice-preview__avatar--speaking::after {
-  content: '';
-  position: absolute;
-  inset: -2px;
-  border-radius: 50%;
-  border: 1.5px solid var(--color-accent);
-  animation: pulse-ring 1.4s var(--ease-standard) infinite;
-}
-
-.voice-preview__mic-icon {
-  font-size: 10px;
-  flex-shrink: 0;
-}
-
-.voice-preview__mic-icon--muted {
-  color: var(--status-dnd);
+.active-call-banner__leave:hover {
+  background: rgba(var(--color-accent-rgb), 0.18);
 }
 
 /* ---- Карточка текущего пользователя внизу панели ---- */
