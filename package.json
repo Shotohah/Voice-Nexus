@@ -1,6 +1,6 @@
 {
   "name": "voice-nexus",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Voice Nexus — UI/UX-прототип мессенджера с голосовыми каналами (собственная визуальная идентичность)",
   "main": "src/main/main.js",
   "author": "Voice Nexus",
